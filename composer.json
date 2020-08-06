@@ -1,0 +1,40 @@
+{
+    "name": "labor-digital/typo3-translation-utils",
+    "type": "typo3-cms-extension",
+    "description": "A set of TYPO3 cli tasks for working with translation labels",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "LABOR.digital",
+            "email": "info@labor.tools",
+            "homepage": "https://www.labor.digital",
+            "role": "Company"
+        },
+        {
+            "name": "Martin Neundorfer",
+            "email": "code@neunerlei.eu",
+            "homepage": "https://www.neunerlei.eu",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "labor-digital/typo3-better-api": "^9.0"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "LaborDigital\\T3TU\\": "Classes"
+        }
+    },
+    "version": "9.0.0",
+    "extra": {
+        "T3BA": {
+            "isDev": true
+        },
+        "typo3/cms": {
+            "extension-key": "T3TU"
+        }
+    }
+}
