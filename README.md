@@ -29,10 +29,20 @@ put the labels into their own column of the file.
 
 With this you can easily provide your Translators an overview of all translations and their matching key.
 
+##### Option: --format | -f
+Allows you to change the output format of the translations.
+By default a .csv file is exported. With this option you can also set it to .xls, .xlsx or .ods,
+depending on your needs
+
 #### translation:import <EXT_KEY>
 Imports the csv files of a translation into xlf translation files. This is basically the reverse operation to "export".
 After you changed the content in your csv files in your translation directory.
 This command will read all the csv files and update/create the required translation xlf files.
+
+**NOTE**
+If the script finds .xls, .xlsx or .ods files in your language directory, it will parse them in the
+same way it does .csv files. This is helpful if you have issues with UTF-8 encoded chars in your
+excel file
 
 #### translation:sync <EXT_KEY>
 Synchronizes all translation files (e.g. de.locallang.xlf,...) with your origin file (e.g. locallang.xlf) and vice versa.

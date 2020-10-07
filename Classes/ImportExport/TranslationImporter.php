@@ -33,7 +33,7 @@ use Neunerlei\PathUtil\Path;
 class TranslationImporter
 {
     use TranslationUtilTrait;
-    
+
     /**
      * Imports all .csv files that are located in the language directory of the given extension into the .xlf files
      *
@@ -42,19 +42,19 @@ class TranslationImporter
     public function import(string $extKey): void
     {
         // Load the files
-        $files = $this->findCsvFiles($extKey);
-        
+        $files = $this->findImportFiles($extKey);
+
         // Skip if the files are empty
         if (empty($files)) {
             return;
         }
-        
+
         // Import the files in order
         foreach ($files as $file) {
             $this->importSingleCsvFile($extKey, $file);
         }
     }
-    
+
     /**
      * Returns a list of csv files in the language directory of the given extension
      *
@@ -62,45 +62,43 @@ class TranslationImporter
      *
      * @return array
      */
-    protected function findCsvFiles(string $extKey): array
+    protected function findImportFiles(string $extKey): array
     {
         $directory = $this->getSetDirectory($extKey);
-        $iterator  = Fs::getDirectoryIterator($directory, false, ['regex' => '~\\.csv$~']);
+        $iterator  = Fs::getDirectoryIterator($directory, false, ['regex' => '~\\.(xls|xlsx|ods|csv)$~']);
         $files     = [];
+        $reader    = $this->Container()->getWithoutDi(TranslationSpreadSheetReader::class);
         foreach ($iterator as $file) {
-            $csvFile           = $this->Container()->getWithoutDi(TranslationCsvFile::class);
-            $files[]           = $csvFile;
-            $csvFile->filename = $file->getPathname();
-            $csvFile->read();
+            $files[] = $reader->readFile($file->getPathname());
         }
-        
+
         return $files;
     }
-    
+
     /**
      * Handles the import of the file-group combined in a single .csv file
      *
-     * @param   string              $extKey   The extension key to import the file to
-     * @param   TranslationCsvFile  $csvFile  The file to import
+     * @param   string                      $extKey   The extension key to import the file to
+     * @param   TranslationSpreadSheetFile  $csvFile  The file to import
      */
-    protected function importSingleCsvFile(string $extKey, TranslationCsvFile $csvFile): void
+    protected function importSingleCsvFile(string $extKey, TranslationSpreadSheetFile $csvFile): void
     {
         // Check if we have this file in our set
         $basename  = basename($csvFile->filename, '.csv');
         $languages = reset($csvFile->rows);
         array_shift($languages);
         $group = $this->initializeGroup($languages, $extKey, $csvFile, $basename);
-        
+
         // Ignore the source language
         $sourceLanguageKey = reset($languages);
-        
+
         $offset = 0;
         foreach ($languages as $language) {
             $file = $sourceLanguageKey === $language ? $group->getSourceFile() : $group->getTargetFiles()[$language];
             $this->importSingleLanguage(++$offset, $file, $csvFile->rows, $sourceLanguageKey);
         }
     }
-    
+
     /**
      * Imports a single language column into its matching translation file
      *
@@ -117,7 +115,7 @@ class TranslationImporter
             if (empty($id)) {
                 continue;
             }
-            
+
             // Check if we have to handle a note
             $isNote      = false;
             $sourceValue = null;
@@ -129,7 +127,7 @@ class TranslationImporter
                 $sourceValue = $row[1];
                 $value       = $row[$offset];
             }
-            
+
             // Inherit from source if the value is empty
             if (empty($value)) {
                 if (! empty($sourceValue)) {
@@ -138,7 +136,7 @@ class TranslationImporter
                     continue;
                 }
             }
-            
+
             if (isset($file->units[$id])) {
                 // Update the unit
                 if ($isSourceFile) {
@@ -163,33 +161,33 @@ class TranslationImporter
                 $file->units[$id] = $unit;
             }
         }
-        
+
         // Persist the file
         $file->write();
     }
-    
+
     /**
      * Used to create the instance of a translation file group
      *
-     * @param   array               $languages  The list of language keys we import (source language is first)
-     * @param   string              $extKey     The extension key we import the translations for
-     * @param   TranslationCsvFile  $csvFile    The reference of the csv file object we create this group fore
-     * @param   string              $basename   The csv file basename to inherit the filename for
+     * @param   array                       $languages  The list of language keys we import (source language is first)
+     * @param   string                      $extKey     The extension key we import the translations for
+     * @param   TranslationSpreadSheetFile  $csvFile    The reference of the csv file object we create this group fore
+     * @param   string                      $basename   The csv file basename to inherit the filename for
      *
      * @return \LaborDigital\T3TU\File\TranslationFileGroup
      */
-    protected function initializeGroup(array $languages, string $extKey, TranslationCsvFile $csvFile, string $basename): TranslationFileGroup
+    protected function initializeGroup(array $languages, string $extKey, TranslationSpreadSheetFile $csvFile, string $basename): TranslationFileGroup
     {
         // Compute the source file
         $sourceLanguageKey = array_shift($languages);
         $sourceFile        = Path::join(dirname($csvFile->filename), $basename . '.xlf');
-        
+
         // Compute the translation files
         $targetFiles = [];
         foreach ($languages as $language) {
             $targetFiles[$language] = Path::join(dirname($csvFile->filename), $language . '.' . $basename . '.xlf');
         }
-        
+
         return $this->Container()->getWithoutDi(TranslationFileGroup::class, [$extKey, $sourceFile, $targetFiles, $sourceLanguageKey]);
     }
 }

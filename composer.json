@@ -18,7 +18,8 @@
         }
     ],
     "require": {
-        "labor-digital/typo3-better-api": "^9.0"
+        "labor-digital/typo3-better-api": "^9.0",
+        "phpoffice/phpspreadsheet": "^1.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master"

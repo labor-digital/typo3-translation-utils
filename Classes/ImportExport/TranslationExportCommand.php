@@ -23,10 +23,12 @@ declare(strict_types=1);
 namespace LaborDigital\T3TU\ImportExport;
 
 
+use InvalidArgumentException;
 use LaborDigital\Typo3BetterApi\Container\TypoContainer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class TranslationExportCommand extends Command
@@ -40,16 +42,24 @@ class TranslationExportCommand extends Command
         $this->setDescription('Exports the translation labels of an extension into a csv file');
         $this->addArgument('extension', InputArgument::REQUIRED,
             'The extension key to export the translations for');
+        $this->addOption('format', 'f', InputOption::VALUE_OPTIONAL,
+            'allows you to set the output format (default: csv), Options are: "csv", "xls", "xlsx" and "ods"', 'csv');
     }
-    
+
     /**
      * @inheritDoc
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $extKey = $input->getArgument('extension');
+        $format = strtolower(ltrim($input->getOption('format'), '.'));
+
+        if (! in_array($format, ['csv', 'xls', 'xlsx', 'ods'])) {
+            throw new InvalidArgumentException('The given format: ' . $format . ' is invalid!');
+        }
+
         $output->writeln('Exporting translations for extension: ' . $extKey);
-        TypoContainer::getInstance()->get(TranslationExporter::class)->export($extKey);
+        TypoContainer::getInstance()->get(TranslationExporter::class)->export($extKey, $format);
         $output->writeln('Done');
     }
 }

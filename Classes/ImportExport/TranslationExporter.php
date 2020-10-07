@@ -30,22 +30,23 @@ use Neunerlei\PathUtil\Path;
 class TranslationExporter
 {
     use TranslationUtilTrait;
-    
+
     /**
      * Exports the translations of a single extension into csv files. One csv is created for each translation file,
      * where the columns represent the existing language variants
      *
      * @param   string  $extKey
+     * @param   string  $outputFormat
      */
-    public function export(string $extKey): void
+    public function export(string $extKey, string $outputFormat = 'csv'): void
     {
         // Handle all sets in order
         $set = $this->getSet($extKey);
         foreach ($set->getGroups() as $group) {
-            $this->exportGroup($group);
+            $this->exportGroup($group, $outputFormat);
         }
     }
-    
+
     /**
      * Exports a single translation group (source and target files) into a csv file
      *
@@ -53,11 +54,11 @@ class TranslationExporter
      *
      * @throws \LaborDigital\T3TU\ImportExport\SourceTargetMismatchException
      */
-    protected function exportGroup(TranslationFileGroup $group): void
+    protected function exportGroup(TranslationFileGroup $group, string $outputFormat): void
     {
         $rows      = [];
         $languages = ['', $group->getSourceFile()->sourceLang];
-        
+
         // Collect all rows on the source file
         foreach ($group->getSourceFile()->units as $unit) {
             if ($unit->isNote) {
@@ -66,11 +67,11 @@ class TranslationExporter
             }
             $rows[$unit->id] = [$unit->id, $unit->source];
         }
-        
+
         // Collect the rows of the target files
         foreach ($group->getTargetFiles() as $language => $targetFile) {
             $languages[] = $language;
-            
+
             // Check if we have all messages and don't miss out on something
             foreach ($targetFile->units as $unit) {
                 if (! isset($rows[$unit->id])) {
@@ -83,26 +84,28 @@ class TranslationExporter
             // Iterate the source messages and find the counterparts
             foreach ($group->getSourceFile()->units as $unit) {
                 $value = $targetFile->units[$unit->id]->target ?? '';
-                
+
                 if ($unit->isNote) {
                     $rows[$unit->id][] = '';
                     continue;
                 }
-                
+
                 if (stripos($value, 'COPY FROM: ') === 0) {
                     $value = '';
                 }
-                
+
                 $rows[$unit->id][] = $value;
             }
         }
-        
+
         // Prepare the file meta data
-        $csvFile           = $this->Container()->getWithoutDi(TranslationCsvFile::class);
-        $sourceFileName    = $group->getSourceFile()->filename;
-        $csvFile->filename = Path::join(dirname($sourceFileName), basename($sourceFileName, '.xlf')) . '.csv';
-        $csvFile->rows     = array_merge([$languages], $rows);
-        $csvFile->write();
+        $file           = $this->Container()->getWithoutDi(TranslationSpreadSheetFile::class);
+        $sourceFileName = $group->getSourceFile()->filename;
+        $file->filename = Path::join(dirname($sourceFileName), basename($sourceFileName, '.xlf')) . '.' . $outputFormat;
+        $file->rows     = array_merge([$languages], $rows);
+
+        $writer = $this->Container()->getWithoutDi(TranslationSpreadSheetWriter::class);
+        $writer->write($file);
     }
-    
+
 }

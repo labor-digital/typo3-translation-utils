@@ -23,10 +23,9 @@ declare(strict_types=1);
 namespace LaborDigital\T3TU\ImportExport;
 
 
-use Neunerlei\Arrays\Arrays;
 use Neunerlei\FileSystem\Fs;
 
-class TranslationCsvFile
+class TranslationSpreadSheetFile
 {
     /**
      * The name of the file
@@ -34,14 +33,14 @@ class TranslationCsvFile
      * @var string
      */
     public $filename;
-    
+
     /**
      * Contains the rows of the csv file
      *
      * @var array
      */
     public $rows = [];
-    
+
     /**
      * Dumps the rows into the file specified in $filename
      */
@@ -57,17 +56,8 @@ class TranslationCsvFile
             $output[] = implode(';', $rowOutput);
         }
         $content = implode("\r\n", $output);
-        
+
         // Dump the file to the disc
-        Fs::writeFile($this->filename, utf8_decode($content));
-    }
-    
-    /**
-     * Loads the contents of $filename into the rows array
-     */
-    public function read(): void
-    {
-        $content    = Fs::readFile($this->filename);
-        $this->rows = Arrays::makeFromCsv($content, false, ';');
+        Fs::writeFile($this->filename, $content);
     }
 }
