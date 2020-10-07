@@ -23,8 +23,6 @@ declare(strict_types=1);
 namespace LaborDigital\T3TU\ImportExport;
 
 
-use Neunerlei\FileSystem\Fs;
-
 class TranslationSpreadSheetFile
 {
     /**
@@ -40,24 +38,4 @@ class TranslationSpreadSheetFile
      * @var array
      */
     public $rows = [];
-
-    /**
-     * Dumps the rows into the file specified in $filename
-     */
-    public function write(): void
-    {
-        // Combine the rows into a string content
-        $output = [];
-        foreach ($this->rows as $row) {
-            $rowOutput = [];
-            foreach ($row as $field) {
-                $rowOutput[] = '"' . str_replace('"', '""', $field) . '"';
-            }
-            $output[] = implode(';', $rowOutput);
-        }
-        $content = implode("\r\n", $output);
-
-        // Dump the file to the disc
-        Fs::writeFile($this->filename, $content);
-    }
 }
