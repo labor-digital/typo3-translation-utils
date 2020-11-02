@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [9.2.1](https://github.com/labor-digital/typo3-translation-utils/compare/v9.2.0...v9.2.1) (2020-11-02)
+
+
+### Bug Fixes
+
+* handle labels with <![CDATA content correctly ([1872bcc](https://github.com/labor-digital/typo3-translation-utils/commit/1872bcc8d2d782215e04b7055a530a763fa8ad6e))
+
 ## [9.2.0](https://github.com/labor-digital/typo3-translation-utils/compare/v9.1.0...v9.2.0) (2020-10-07)
 
 
