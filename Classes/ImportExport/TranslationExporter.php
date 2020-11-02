@@ -90,6 +90,10 @@ class TranslationExporter
                     continue;
                 }
 
+                if (stripos($value, '<![CDATA[') !== false) {
+                    $value = trim(preg_replace('~<!\[CDATA\[(.*?)]]>~', '$1', $value));
+                }
+
                 if (stripos($value, 'COPY FROM: ') === 0) {
                     $value = '';
                 }

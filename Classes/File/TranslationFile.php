@@ -48,49 +48,49 @@ use Neunerlei\TinyTimy\DateTimy;
 class TranslationFile
 {
     use ContainerAwareTrait;
-    
+
     /**
      * The full filename of this translation file
      *
      * @var string
      */
     public $filename;
-    
+
     /**
      * The source language of this translation file
      *
      * @var string
      */
     public $sourceLang = 'en';
-    
+
     /**
      * The target language (on lang files) or null if this is the origin file
      *
      * @var string|null
      */
     public $targetLang;
-    
+
     /**
      * The product name to set for this translation file
      *
      * @var string
      */
     public $productName;
-    
+
     /**
      * The list of translation pairs inside of this translation file
      *
      * @var \LaborDigital\T3TU\File\TranslationFileUnit[]
      */
     public $units = [];
-    
+
     /**
      * Additional xml attributes for the xliff tag
      *
      * @var array
      */
     public $params = [];
-    
+
     /**
      * TranslationFile constructor.
      *
@@ -103,8 +103,8 @@ class TranslationFile
         $this->filename = $filename;
         $this->initialize($productName, $targetLangFallback);
     }
-    
-    
+
+
     public function write(): void
     {
         // Prepare map to sort namespaced and global elements correctly
@@ -120,10 +120,10 @@ class TranslationFile
             }
             $temporaryMap[$k] = $v;
         }
-        
+
         // Sort the messages by their id
         ksort($temporaryMap);
-        
+
         // Revert the keys
         $sortedMap = [];
         foreach ($temporaryMap as $k => $v) {
@@ -134,7 +134,7 @@ class TranslationFile
         }
         $messages = $sortedMap;
         unset($temporaryMap, $mapIdMapping, $sortedMap);
-        
+
         // Build a list of children
         $children = [
             'tag' => 'body',
@@ -144,7 +144,7 @@ class TranslationFile
                 $children[] = [
                     'tag'     => 'note',
                     '@id'     => $message->id,
-                    'content' => PHP_EOL . $message->note . PHP_EOL,
+                    'content' => $this->wrapCDataLabel(PHP_EOL . $message->note . PHP_EOL),
                 ];
             } else {
                 $children[]
@@ -154,7 +154,7 @@ class TranslationFile
                         '@id' => $message->id,
                         [
                             'tag'     => 'source',
-                            'content' => $message->source,
+                            'content' => $this->wrapCDataLabel($message->source),
                         ],
                     ],
                     $isBaseFile
@@ -162,13 +162,13 @@ class TranslationFile
                         : [
                         1 => [
                             'tag'     => 'target',
-                            'content' => $message->target,
+                            'content' => $this->wrapCDataLabel($message->target),
                         ],
                     ]
                 );
             }
         }
-        
+
         // Create an array representation for this file
         $out = [
             [
@@ -191,14 +191,14 @@ class TranslationFile
                     $isBaseFile ? [] : ['@target-language' => $this->targetLang]),
             ],
         ];
-        
+
         // Dump the file
         $xml = Arrays::dumpToXml($out, true);
         $xml = $this->postProcessXmlStyle($xml);
         Fs::writeFile($this->filename, $xml);
         Permissions::setFilePermissions($this->filename);
     }
-    
+
     /**
      * Initializes the instance by reading the file contents
      *
@@ -214,10 +214,10 @@ class TranslationFile
             $this->sourceLang  = 'en';
             $this->productName = $productName;
             $this->targetLang  = $targetLangFallback;
-            
+
             return;
         }
-        
+
         $content = Fs::readFile($this->filename);
         try {
             $contentList = Arrays::makeFromXml($content);
@@ -227,7 +227,7 @@ class TranslationFile
                 $exception->getCode(),
                 $exception);
         }
-        
+
         // Read the file metadata
         foreach (Arrays::getPath($contentList, '0.0.*', []) as $k => $row) {
             if (is_string($k) && strpos($k, '@') === 0) {
@@ -237,7 +237,7 @@ class TranslationFile
         $this->sourceLang  = Arrays::getPath($contentList, '0.0.@source-language', 'en');
         $this->productName = Arrays::getPath($contentList, '0.0.@product-name', $productName);
         $this->targetLang  = Arrays::getPath($contentList, '0.0.@target-language', $targetLangFallback);
-        
+
         // Read the messages
         foreach (Arrays::getPath($contentList, '0.0.*', []) as $entry) {
             if (! isset($entry['tag']) || $entry['tag'] !== 'body') {
@@ -256,19 +256,19 @@ class TranslationFile
                 if (! isset($row['@id'])) {
                     continue;
                 }
-                
+
                 // Create a new item/unit
                 $unit     = $this->Container()->getWithoutDi(TranslationFileUnit::class);
                 $unit->id = $row['@id'];
                 $hasError = false;
-                
+
                 // Save notes
                 if ($row['tag'] === 'note') {
                     $unit->isNote = true;
-                    
+
                     // Unify line breaks
                     $row['content'] = str_replace(["\t", "\r\n", PHP_EOL], PHP_EOL, $row['content']);
-                    
+
                     $unit->note = isset($row['content']) ?
                         implode(PHP_EOL, array_filter(array_map('trim', explode(PHP_EOL, $row['content'])))) : '';
                 } // Save translation units
@@ -277,12 +277,12 @@ class TranslationFile
                         if (is_string($_k) || ! is_array($child)) {
                             continue;
                         }
-                        
+
                         // Unify line breaks
                         $child['content'] = str_replace(["\t", "\r\n", PHP_EOL], PHP_EOL, $child['content']);
                         $child['content'] = implode(' ',
                             array_filter(array_map('trim', explode(PHP_EOL, $child['content']))));
-                        
+
                         // Load the content
                         switch (Arrays::getPath($child, 'tag')) {
                             case 'source':
@@ -297,7 +297,7 @@ class TranslationFile
                         }
                     }
                 }
-                
+
                 // Ignore on error
                 if ($hasError) {
                     continue;
@@ -306,7 +306,23 @@ class TranslationFile
             }
         }
     }
-    
+
+    /**
+     * Makes sure that labels containing tags are encoded in cData
+     *
+     * @param   string  $label
+     *
+     * @return string
+     */
+    protected function wrapCDataLabel(string $label): string
+    {
+        if (strpos($label, '<') !== false) {
+            return '<![CDATA[' . $label . ']]>';
+        }
+
+        return $label;
+    }
+
     /**
      * Make sure we format the xml correctly to match the recommended format
      *
@@ -330,13 +346,13 @@ class TranslationFile
                     if ($v === '') {
                         return null;
                     }
-                    
+
                     return $space . '    ' . $v;
                 }, $lines));
-                
+
                 return PHP_EOL . $openTag . PHP_EOL . implode(PHP_EOL, $lines) . PHP_EOL . $space . $closeTag;
             }, $xml);
-        
+
         return $xml;
     }
 }

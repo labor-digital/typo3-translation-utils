@@ -25,21 +25,21 @@ use LaborDigital\T3TU\File\TranslationFileGroup;
 
 class TranslationSyncMapping
 {
-    
+
     /**
      * The translation file group we should synchronize
      *
      * @var \LaborDigital\T3TU\File\TranslationFileGroup
      */
     protected $group;
-    
+
     /**
      * A list that maps the messages over all registered languages by their id
      *
      * @var array
      */
     protected $map = [];
-    
+
     /**
      * A list that maps the source text to the map id, as fallback if the id's were changed
      * in the origin file, but not in the children
@@ -47,7 +47,7 @@ class TranslationSyncMapping
      * @var array
      */
     protected $sourceMap = [];
-    
+
     /**
      * TranslationSyncMapping constructor.
      *
@@ -57,7 +57,7 @@ class TranslationSyncMapping
     {
         $this->group = $group;
     }
-    
+
     /**
      * Returns the translation file group we should synchronize
      *
@@ -67,7 +67,7 @@ class TranslationSyncMapping
     {
         return $this->group;
     }
-    
+
     /**
      * The main method which synchronizes the file contents with each other,
      * updating id's and sources to match the origin file
@@ -79,23 +79,23 @@ class TranslationSyncMapping
         $this->sourceMap = [];
         $this->initializeSourceFile();
         $this->initializeTargetFiles();
-        
+
         // Sort the map
         ksort($this->map);
-        
+
         // Loop over all languages
         $sourceFile = $this->group->getSourceFile();
         foreach ($this->group->getTargetFiles() as $fileId => $targetFile) {
             $fileId       = $targetFile->filename;
             $sourceFileId = $this->group->getSourceFile()->filename;
-            
+
             // Update the meta data
             $targetFile->productName = $sourceFile->productName;
             $targetFile->sourceLang  = $sourceFile->sourceLang;
-            
+
             // Reset the internal message storage
             $targetFile->units = [];
-            
+
             // Rebuild the messages list based on the mapping
             foreach ($this->map as $id => $units) {
                 // Check if we know this message in the target lang
@@ -118,14 +118,14 @@ class TranslationSyncMapping
                 $targetFile->units[$id] = $unit;
             }
         }
-        
+
         // Done
         $this->map       = [];
         $this->sourceMap = [];
-        
+
         return $this->getGroup();
     }
-    
+
     /**
      * Reads the contents of the source translation file into the map
      */
@@ -138,7 +138,7 @@ class TranslationSyncMapping
             $this->sourceMap[$sourceId][] = $unit->id;
         }
     }
-    
+
     /**
      * Reads the contents of the target files into the map
      */
@@ -148,7 +148,7 @@ class TranslationSyncMapping
             // Read the content into the map
             foreach ($targetFile->units as $unit) {
                 $sourceId = md5(trim($unit->isNote ? $unit->note : $unit->source));
-                
+
                 // Try to map the id over the source string (Fallback if source id was changed)
                 if (! isset($this->map[$unit->id])) {
                     if (isset($this->sourceMap[$sourceId])) {
@@ -160,12 +160,12 @@ class TranslationSyncMapping
                             $matches = array_filter($this->sourceMap[$sourceId], static function ($v) use ($targetFile) {
                                 return ! isset($targetFile->units[$v]);
                             });
-                            
+
                             // Mapping failed
                             if (empty($matches)) {
                                 continue;
                             }
-                            
+
                             // Update id
                             $unit->id = reset($matches);
                         }
