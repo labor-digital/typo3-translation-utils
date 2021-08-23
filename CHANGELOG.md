@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [11.0.0](https://github.com/labor-digital/typo3-translation-utils/compare/v9.2.1...v11.0.0) (2021-08-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* the extension now requires TYPO3 v10
+
+### Features
+
+* migrate to TYPO3 v10 ([ccdac76](https://github.com/labor-digital/typo3-translation-utils/commit/ccdac7625cc7b32b030ba856fca8e516cb2fdc7b))
+
 ### [9.2.1](https://github.com/labor-digital/typo3-translation-utils/compare/v9.2.0...v9.2.1) (2020-11-02)
 
 
