@@ -1,41 +1,41 @@
 {
-    "name": "labor-digital/typo3-translation-utils",
-    "type": "typo3-cms-extension",
-    "description": "A set of TYPO3 cli tasks for working with translation labels",
-    "license": "Apache-2.0",
-    "authors": [
-        {
-            "name": "LABOR.digital",
-            "email": "info@labor.tools",
-            "homepage": "https://www.labor.digital",
-            "role": "Company"
-        },
-        {
-            "name": "Martin Neundorfer",
-            "email": "code@neunerlei.eu",
-            "homepage": "https://www.neunerlei.eu",
-            "role": "Developer"
-        }
-    ],
-    "require": {
-        "labor-digital/typo3-better-api": "^10.0",
-        "phpoffice/phpspreadsheet": "^1.0"
-    },
-    "require-dev": {
-        "roave/security-advisories": "dev-latest"
-    },
-    "autoload": {
-        "psr-4": {
-            "LaborDigital\\T3tu\\": "Classes"
-        }
-    },
-    "version": "11.0.0",
-    "extra": {
-        "T3BA": {
-            "isDev": true
-        },
-        "typo3/cms": {
-            "extension-key": "t3tu"
-        }
-    }
+	"name": "labor-digital/typo3-translation-utils",
+	"type": "typo3-cms-extension",
+	"description": "A set of TYPO3 cli tasks for working with translation labels",
+	"license": "Apache-2.0",
+	"authors": [
+		{
+			"name": "LABOR.digital",
+			"email": "info@labor.tools",
+			"homepage": "https://www.labor.digital",
+			"role": "Company"
+		},
+		{
+			"name": "Martin Neundorfer",
+			"email": "code@neunerlei.eu",
+			"homepage": "https://www.neunerlei.eu",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"labor-digital/typo3-better-api": "^10.0",
+		"phpoffice/phpspreadsheet": "^1.0"
+	},
+	"require-dev": {
+		"roave/security-advisories": "dev-latest"
+	},
+	"autoload": {
+		"psr-4": {
+			"LaborDigital\\T3tu\\": "Classes"
+		}
+	},
+	"version": "10.0.0",
+	"extra": {
+		"T3BA": {
+			"isDev": true
+		},
+		"typo3/cms": {
+			"extension-key": "t3tu"
+		}
+	}
 }
