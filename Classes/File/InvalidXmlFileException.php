@@ -20,10 +20,10 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\File;
+namespace LaborDigital\T3tu\File;
 
 
-use LaborDigital\T3TU\TranslationUtilsException;
+use LaborDigital\T3tu\TranslationUtilsException;
 
 class InvalidXmlFileException extends TranslationUtilsException
 {

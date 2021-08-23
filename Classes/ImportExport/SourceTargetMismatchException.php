@@ -20,10 +20,10 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\ImportExport;
+namespace LaborDigital\T3tu\ImportExport;
 
 
-use LaborDigital\T3TU\TranslationUtilsException;
+use LaborDigital\T3tu\TranslationUtilsException;
 
 class SourceTargetMismatchException extends TranslationUtilsException
 {

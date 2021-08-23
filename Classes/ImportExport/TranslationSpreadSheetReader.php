@@ -20,7 +20,7 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\ImportExport;
+namespace LaborDigital\T3tu\ImportExport;
 
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -35,7 +35,7 @@ class TranslationSpreadSheetReader
      *
      * @param   string  $filename
      *
-     * @return \LaborDigital\T3TU\ImportExport\TranslationSpreadSheetFile
+     * @return \LaborDigital\T3tu\ImportExport\TranslationSpreadSheetFile
      */
     public function readFile(string $filename): TranslationSpreadSheetFile
     {
@@ -90,7 +90,7 @@ class TranslationSpreadSheetReader
      * @param   string  $filename
      * @param   array   $rows
      *
-     * @return \LaborDigital\T3TU\ImportExport\TranslationSpreadSheetFile
+     * @return \LaborDigital\T3tu\ImportExport\TranslationSpreadSheetFile
      */
     protected function makeCsvFile(string $filename, array $rows): TranslationSpreadSheetFile
     {

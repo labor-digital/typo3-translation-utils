@@ -18,34 +18,34 @@
  */
 
 $EM_CONF[$_EXTKEY] = [
-    "title"            => "LABOR - Typo3 - Translation Utils",
-    "description"      => "A set of TYPO3 cli tasks for working with translation labels",
-    "author"           => "Martin Neundorfer",
-    "author_email"     => "m.neundorfer@labor.digital",
-    "category"         => "search",
-    "author_company"   => "Labor.digital",
-    "shy"              => "",
-    "conflicts"        => "",
-    "priority"         => "",
-    "module"           => "",
-    "state"            => "beta",
-    "internal"         => "",
-    "uploadfolder"     => 0,
-    "createDirs"       => "",
-    "modify_tables"    => "",
+    "title" => "LABOR - Typo3 - Translation Utils",
+    "description" => "A set of TYPO3 cli tasks for working with translation labels",
+    "author" => "Martin Neundorfer",
+    "author_email" => "m.neundorfer@labor.digital",
+    "category" => "search",
+    "author_company" => "Labor.digital",
+    "shy" => "",
+    "conflicts" => "",
+    "priority" => "",
+    "module" => "",
+    "state" => "stable",
+    "internal" => "",
+    "uploadfolder" => 0,
+    "createDirs" => "",
+    "modify_tables" => "",
     "clearCacheOnLoad" => 1,
-    "lockType"         => "",
-    "version"          => "9.2.1",
-    "constraints"      => [
-        "depends"   => [
-            "typo3" => "9.0.0-9.99.99",
+    "lockType" => "",
+    "version" => "9.2.1",
+    "constraints" => [
+        "depends" => [
+            "typo3" => "10.0.0-10.99.99",
         ],
         "conflicts" => [
         ],
-        "suggests"  => [
+        "suggests" => [
         ],
     ],
-    "suggests"         => [
+    "suggests" => [
     
     ],
 ];

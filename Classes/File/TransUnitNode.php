@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright 2020 LABOR.digital
+/*
+ * Copyright 2021 LABOR.digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Last modified: 2020.03.23 at 18:13
+ * Last modified: 2021.08.23 at 13:56
  */
 
-/** @var string $_EXTKEY */
-betterExtConfig("LaborDigital." . $_EXTKEY, \LaborDigital\T3TU\ExtConfig\TranslationUtilsExtConfig::class);
+declare(strict_types=1);
+
+
+namespace LaborDigital\T3tu\File;
+
+
+class TransUnitNode extends AbstractNode
+{
+    /**
+     * The source language value for this id
+     *
+     * @var string
+     */
+    public $source;
+    
+    /**
+     * The target value for this language, or null if this is the base/origin file or if $isNote is true
+     *
+     * @var string|null
+     */
+    public $target;
+}

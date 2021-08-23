@@ -20,16 +20,15 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\File;
+namespace LaborDigital\T3tu\File;
 
 
-use LaborDigital\Typo3BetterApi\Container\ContainerAwareTrait;
-use Neunerlei\FileSystem\Fs;
+use LaborDigital\T3ba\Core\Di\NoDiInterface;
+use LaborDigital\T3tu\File\Io\FileReader;
 use Neunerlei\PathUtil\Path;
 
-class TranslationFileGroup
+class TranslationFileGroup implements NoDiInterface
 {
-    use ContainerAwareTrait;
     
     /**
      * The product name / extension key for this translation file set
@@ -48,34 +47,36 @@ class TranslationFileGroup
     /**
      * The source translation file
      *
-     * @var \LaborDigital\T3TU\File\TranslationFile
+     * @var \LaborDigital\T3tu\File\TranslationFile
      */
     protected $sourceFile;
     
     /**
      * The list of languages files for the source translation
      *
-     * @var \LaborDigital\T3TU\File\TranslationFile[]
+     * @var \LaborDigital\T3tu\File\TranslationFile[]
      */
     protected $targetFiles = [];
     
     /**
      * TranslationFileGroup constructor.
      *
-     * @param   string  $productName       The product name / extension key for this translation file set
-     * @param   string  $sourceFile        The absolute path to the source translation file
-     * @param   array   $targetFiles       A list of absolute path's for the target translation files
-     * @param   string  $fallbackLanguage  Optional language key to use if the source file does not exist
+     * @param   string           $productName       The product name / extension key for this translation file set
+     * @param   TranslationFile  $sourceFile        The reference of the parsed source file
+     * @param   array            $targetFiles       A list of parsed target translation files
+     * @param   string           $fallbackLanguage  Optional language key to use if the source file does not exist
      */
     public function __construct(
         string $productName,
-        string $sourceFile,
+        TranslationFile $sourceFile,
         array $targetFiles,
         string $fallbackLanguage = 'en'
-    ) {
-        $this->productName      = $productName;
+    )
+    {
+        $this->productName = $productName;
         $this->fallbackLanguage = $fallbackLanguage;
-        $this->initialize($sourceFile, $targetFiles);
+        $this->sourceFile = $sourceFile;
+        $this->targetFiles = $targetFiles;
     }
     
     /**
@@ -91,7 +92,7 @@ class TranslationFileGroup
     /**
      * Returns the source translation file
      *
-     * @return \LaborDigital\T3TU\File\TranslationFile
+     * @return \LaborDigital\T3tu\File\TranslationFile
      */
     public function getSourceFile(): TranslationFile
     {
@@ -101,7 +102,7 @@ class TranslationFileGroup
     /**
      * Returns the list of languages files for the source translation
      *
-     * @return \LaborDigital\T3TU\File\TranslationFile[]
+     * @return \LaborDigital\T3tu\File\TranslationFile[]
      */
     public function getTargetFiles(): array
     {
@@ -122,46 +123,7 @@ class TranslationFileGroup
         $filename = Path::join(dirname($this->sourceFile->filename),
             $language . '.' . basename($this->sourceFile->filename));
         
-        $this->targetFiles[$language] = $this->makeTranslationFile($filename, $language);
-    }
-    
-    
-    protected function initialize(string $sourceFile, array $targetFiles): void
-    {
-        // Initialize the source file
-        if (! Fs::exists($sourceFile)) {
-            $this->sourceFile = $this->initializeMissingSourceFile($sourceFile, $targetFiles);
-        } else {
-            $this->sourceFile = $this->makeTranslationFile($sourceFile);
-        }
-        
-        // Initialize the target files
-        foreach ($targetFiles as $language => $targetFile) {
-            $this->targetFiles[$language] = $this->makeTranslationFile($targetFile, $language);
-        }
-    }
-    
-    protected function initializeMissingSourceFile(string $sourceFile, array $targetFiles): TranslationFile
-    {
-        $fallbackFile           = $this->makeTranslationFile(reset($targetFiles));
-        $fallbackFile->filename = $sourceFile;
-        
-        // Reset it to english
-        $fallbackFile->targetLang  = null;
-        $fallbackFile->sourceLang  = $this->fallbackLanguage;
-        $fallbackFile->productName = $this->productName;
-        
-        // Clear target for all messages
-        foreach ($fallbackFile->units as $k => $message) {
-            $message->target = null;
-        }
-        
-        return $fallbackFile;
-    }
-    
-    protected function makeTranslationFile(string $filename, string $targetLangFallback = 'en'): TranslationFile
-    {
-        return $this->Container()
-                    ->getWithoutDi(TranslationFile::class, [$filename, $this->productName, $targetLangFallback]);
+        $this->targetFiles[$language]
+            = FileReader::makeEmptyFile($filename, $this->productName, $language, $this->sourceFile->sourceLang);
     }
 }

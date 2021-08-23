@@ -18,28 +18,27 @@ declare(strict_types=1);
  * Last modified: 2020.07.22 at 22:29
  */
 
-namespace LaborDigital\T3TU\Sync;
+namespace LaborDigital\T3tu\Sync;
 
 
-use LaborDigital\T3TU\File\TranslationFileGroup;
+use LaborDigital\T3tu\File\TranslationFileGroup;
 
-class TranslationSyncMapping
+class SyncMapper
 {
-
     /**
      * The translation file group we should synchronize
      *
-     * @var \LaborDigital\T3TU\File\TranslationFileGroup
+     * @var \LaborDigital\T3tu\File\TranslationFileGroup
      */
     protected $group;
-
+    
     /**
      * A list that maps the messages over all registered languages by their id
      *
      * @var array
      */
     protected $map = [];
-
+    
     /**
      * A list that maps the source text to the map id, as fallback if the id's were changed
      * in the origin file, but not in the children
@@ -47,55 +46,32 @@ class TranslationSyncMapping
      * @var array
      */
     protected $sourceMap = [];
-
+    
     /**
-     * TranslationSyncMapping constructor.
+     * Synchronizes all files inside the given group
      *
-     * @param   \LaborDigital\T3TU\File\TranslationFileGroup  $group
+     * @param   \LaborDigital\T3tu\File\TranslationFileGroup  $group
      */
-    public function __construct(TranslationFileGroup $group)
+    public function apply(TranslationFileGroup $group): void
     {
         $this->group = $group;
-    }
-
-    /**
-     * Returns the translation file group we should synchronize
-     *
-     * @return \LaborDigital\T3TU\File\TranslationFileGroup
-     */
-    public function getGroup(): TranslationFileGroup
-    {
-        return $this->group;
-    }
-
-    /**
-     * The main method which synchronizes the file contents with each other,
-     * updating id's and sources to match the origin file
-     */
-    public function synchronize(): TranslationFileGroup
-    {
-        // Initialize the map
-        $this->map       = [];
+        $this->map = [];
         $this->sourceMap = [];
+        
         $this->initializeSourceFile();
         $this->initializeTargetFiles();
-
-        // Sort the map
         ksort($this->map);
-
+        
         // Loop over all languages
         $sourceFile = $this->group->getSourceFile();
-        foreach ($this->group->getTargetFiles() as $fileId => $targetFile) {
-            $fileId       = $targetFile->filename;
+        foreach ($this->group->getTargetFiles() as $targetFile) {
+            $fileId = $targetFile->filename;
             $sourceFileId = $this->group->getSourceFile()->filename;
-
-            // Update the meta data
+            
             $targetFile->productName = $sourceFile->productName;
-            $targetFile->sourceLang  = $sourceFile->sourceLang;
-
-            // Reset the internal message storage
-            $targetFile->units = [];
-
+            $targetFile->sourceLang = $sourceFile->sourceLang;
+            $targetFile->nodes = [];
+            
             // Rebuild the messages list based on the mapping
             foreach ($this->map as $id => $units) {
                 // Check if we know this message in the target lang
@@ -107,7 +83,7 @@ class TranslationSyncMapping
                     }
                 } else {
                     // Update the id and the source
-                    $unit     = $units[$fileId];
+                    $unit = $units[$fileId];
                     $unit->id = $id;
                     if ($unit->isNote) {
                         $unit->note = $units[$sourceFileId]->note;
@@ -115,30 +91,26 @@ class TranslationSyncMapping
                         $unit->source = $units[$sourceFileId]->source;
                     }
                 }
-                $targetFile->units[$id] = $unit;
+                $targetFile->nodes[$id] = $unit;
             }
         }
-
-        // Done
-        $this->map       = [];
-        $this->sourceMap = [];
-
-        return $this->getGroup();
+        
+        $this->map = $this->sourceMap = [];
     }
-
+    
     /**
      * Reads the contents of the source translation file into the map
      */
     protected function initializeSourceFile(): void
     {
         $sourceFile = $this->group->getSourceFile();
-        foreach ($sourceFile->units as $unit) {
-            $sourceId                     = md5(trim($unit->isNote ? $unit->note : $unit->source));
-            $this->map[$unit->id]         = [$sourceFile->filename => $unit];
+        foreach ($sourceFile->nodes as $unit) {
+            $sourceId = md5(trim($unit->isNote ? $unit->note : $unit->source));
+            $this->map[$unit->id] = [$sourceFile->filename => $unit];
             $this->sourceMap[$sourceId][] = $unit->id;
         }
     }
-
+    
     /**
      * Reads the contents of the target files into the map
      */
@@ -146,9 +118,9 @@ class TranslationSyncMapping
     {
         foreach ($this->group->getTargetFiles() as $targetFile) {
             // Read the content into the map
-            foreach ($targetFile->units as $unit) {
+            foreach ($targetFile->nodes as $unit) {
                 $sourceId = md5(trim($unit->isNote ? $unit->note : $unit->source));
-
+                
                 // Try to map the id over the source string (Fallback if source id was changed)
                 if (! isset($this->map[$unit->id])) {
                     if (isset($this->sourceMap[$sourceId])) {
@@ -158,14 +130,14 @@ class TranslationSyncMapping
                         } else {
                             // Try to figure out the correct match
                             $matches = array_filter($this->sourceMap[$sourceId], static function ($v) use ($targetFile) {
-                                return ! isset($targetFile->units[$v]);
+                                return ! isset($targetFile->nodes[$v]);
                             });
-
+                            
                             // Mapping failed
                             if (empty($matches)) {
                                 continue;
                             }
-
+                            
                             // Update id
                             $unit->id = reset($matches);
                         }

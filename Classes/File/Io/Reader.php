@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright 2020 LABOR.digital
+/*
+ * Copyright 2021 LABOR.digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Last modified: 2020.07.23 at 09:58
+ * Last modified: 2021.08.23 at 10:29
  */
 
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3tu\Util;
+namespace LaborDigital\T3tu\File\Io;
 
 
 use LaborDigital\T3ba\Tool\TypoContext\TypoContext;
 use LaborDigital\T3tu\File\TranslationSet;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-trait TranslationUtilTrait
+class Reader
 {
+    /**
+     * @var \LaborDigital\T3tu\File\Io\GroupReader
+     */
+    protected $groupReader;
     
     /**
-     * Creates the translation set for a given extension key
-     *
-     * @param   string  $extKey
-     *
-     * @param   string  $fallbackLanguage
-     *
-     * @return \LaborDigital\T3tu\File\TranslationSet
+     * @var \LaborDigital\T3ba\Tool\TypoContext\TypoContext
      */
-    protected function getSet(string $extKey, string $fallbackLanguage = 'en'): TranslationSet
+    protected $typoContext;
+    
+    public function __construct(GroupReader $groupReader, TypoContext $typoContext)
+    {
+        $this->groupReader = $groupReader;
+        $this->typoContext = $typoContext;
+    }
+    
+    public function read(string $extKey, ?string $fallbackLanguage = null): TranslationSet
     {
         $directory = $this->getSetDirectory($extKey);
+        $productName = $extKey;
         
-        return GeneralUtility::makeInstance(TranslationSet::class, $extKey, $directory, $fallbackLanguage);
+        $groups = $this->groupReader->read($productName, $directory, $fallbackLanguage);
+        
+        return GeneralUtility::makeInstance(TranslationSet::class, $productName, $directory, $groups);
     }
     
     /**
@@ -55,6 +64,6 @@ trait TranslationUtilTrait
      */
     protected function getSetDirectory(string $extKey): string
     {
-        return TypoContext::getInstance()->path()->getExtensionPath($extKey) . 'Resources/Private/Language/';
+        return $this->typoContext->path()->getExtensionPath($extKey) . 'Resources/Private/Language/';
     }
 }

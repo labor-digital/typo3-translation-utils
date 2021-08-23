@@ -18,24 +18,24 @@
         }
     ],
     "require": {
-        "labor-digital/typo3-better-api": "^9.0",
+        "labor-digital/typo3-better-api": "^10.0",
         "phpoffice/phpspreadsheet": "^1.0"
     },
     "require-dev": {
-        "roave/security-advisories": "dev-master"
+        "roave/security-advisories": "dev-latest"
     },
     "autoload": {
         "psr-4": {
-            "LaborDigital\\T3TU\\": "Classes"
+            "LaborDigital\\T3tu\\": "Classes"
         }
     },
-    "version": "9.2.1",
+    "version": "10.0.0",
     "extra": {
         "T3BA": {
             "isDev": true
         },
         "typo3/cms": {
-            "extension-key": "T3TU"
+            "extension-key": "t3tu"
         }
     }
 }

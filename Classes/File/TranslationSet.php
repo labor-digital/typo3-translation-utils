@@ -20,16 +20,13 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\File;
+namespace LaborDigital\T3tu\File;
 
 
-use Iterator;
-use LaborDigital\Typo3BetterApi\Container\ContainerAwareTrait;
-use Neunerlei\FileSystem\Fs;
+use LaborDigital\T3ba\Core\Di\NoDiInterface;
 
-class TranslationSet
+class TranslationSet implements NoDiInterface
 {
-    use ContainerAwareTrait;
     
     /**
      * The product name / extension key for this translation file set
@@ -39,13 +36,6 @@ class TranslationSet
     protected $productName;
     
     /**
-     * The default source language code if no source file was found
-     *
-     * @var string
-     */
-    protected $fallbackLanguage;
-    
-    /**
      * The directory where this file set is located
      *
      * @var string
@@ -53,25 +43,17 @@ class TranslationSet
     protected $directory;
     
     /**
-     * The list of all languages in this set
-     *
-     * @var array
-     */
-    protected $languages = [];
-    
-    /**
      * The list of groups inside this set
      *
-     * @var \LaborDigital\T3TU\File\TranslationFileGroup[]
+     * @var \LaborDigital\T3tu\File\TranslationFileGroup[]
      */
     protected $groups = [];
     
-    public function __construct(string $productName, string $directory, string $fallbackLanguage = 'en')
+    public function __construct(string $productName, string $directory, array $groups)
     {
-        $this->productName      = $productName;
-        $this->directory        = $directory;
-        $this->fallbackLanguage = $fallbackLanguage;
-        $this->initialize();
+        $this->productName = $productName;
+        $this->directory = $directory;
+        $this->groups = $groups;
     }
     
     /**
@@ -101,75 +83,27 @@ class TranslationSet
      */
     public function getLanguages(): array
     {
-        return $this->languages;
+        $languages = [];
+        
+        foreach ($this->groups as $group) {
+            $languages[] = $group->getSourceFile()->sourceLang;
+            
+            foreach ($group->getTargetFiles() as $targetFile) {
+                $languages[] = $targetFile->sourceLang;
+                $languages[] = $targetFile->targetLang;
+            }
+        }
+        
+        return array_unique(array_filter($languages));
     }
     
     /**
      * Returns the list of all translation groups
      *
-     * @return \LaborDigital\T3TU\File\TranslationFileGroup[]
+     * @return \LaborDigital\T3tu\File\TranslationFileGroup[]
      */
     public function getGroups(): array
     {
         return $this->groups;
-    }
-    
-    
-    protected function initialize(): void
-    {
-        $this->createGroupInstances(
-            $this->findGroups(Fs::getDirectoryIterator($this->directory, false, ['regex' => '~\\.xlf$~']))
-        );
-    }
-    
-    protected function findGroups(Iterator $iterator): array
-    {
-        $groups = [];
-        foreach ($iterator as $k => $v) {
-            $basename = $v->getBasename('.xlf');
-            $langKey  = '';
-            if (strpos($basename, '.') === 2) {
-                $langKey                   = substr($basename, 0, 2);
-                $this->languages[$langKey] = $langKey;
-                $basename                  = substr($basename, 3);
-            }
-            
-            // Make sure we have a fileset
-            if (! isset($groups[$basename])) {
-                $groups[$basename] = [
-                    'source' => '',
-                    'target' => [],
-                ];
-            }
-            
-            // Add file to list
-            if (empty($langKey)) {
-                $groups[$basename]['source'] = $v->getPathname();
-            } else {
-                $groups[$basename]['target'][$langKey] = $v->getPathname();
-            }
-        }
-        
-        return $groups;
-    }
-    
-    protected function createGroupInstances(array $groups): void
-    {
-        foreach ($groups as $group) {
-            // Make sure the source file exists
-            if (! isset($group['source'])) {
-                $fallbackFile         = reset($group['target']);
-                $fallbackFileBaseName = basename($fallbackFile);
-                $group['source']      = dirname($fallbackFile) . DIRECTORY_SEPARATOR .
-                                        substr($fallbackFileBaseName, strpos($fallbackFileBaseName, '.') + 1);
-            }
-            
-            // Instantiate the group
-            $this->groups[] = $this->Container()->getWithoutDi(TranslationFileGroup::class, [
-                $this->productName,
-                $group['source'],
-                $group['target'],
-            ]);
-        }
     }
 }

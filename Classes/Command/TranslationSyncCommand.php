@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright 2020 LABOR.digital
+/*
+ * Copyright 2021 LABOR.digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Last modified: 2020.07.22 at 22:28
+ * Last modified: 2021.08.22 at 21:41
  */
 
 declare(strict_types=1);
 
-namespace LaborDigital\T3TU\Sync;
+namespace LaborDigital\T3tu\Command;
 
-use LaborDigital\Typo3BetterApi\Container\TypoContainer;
+use LaborDigital\T3ba\Core\Di\ContainerAwareTrait;
+use LaborDigital\T3ba\ExtConfigHandler\Command\ConfigureCliCommandInterface;
+use LaborDigital\T3tu\File\Io\ConstraintApplier;
+use LaborDigital\T3tu\Sync\TranslationSynchronizer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class TranslationSyncCommand extends Command
+class TranslationSyncCommand extends Command implements ConfigureCliCommandInterface
 {
+    use ContainerAwareTrait;
+    
     /**
      * @inheritDoc
      */
     protected function configure()
     {
-        $this->setName('translation:sync');
-        $this->setHelp('Synchronizes the translation files of a given extension');
+        $this->setName('t3tu:sync');
+        $this->setDescription('Synchronizes the translation files of a given extension');
         $this->addArgument('extension', InputArgument::REQUIRED,
             'The extension key to synchronize the translations for');
     }
@@ -45,9 +50,13 @@ class TranslationSyncCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->getService(ConstraintApplier::class)->setAction(ConstraintApplier::ACTION_SYNC);
+        
         $extKey = $input->getArgument('extension');
         $output->writeln('Syncing translations for extension: ' . $extKey);
-        TypoContainer::getInstance()->get(TranslationSynchronizer::class)->synchronize($extKey);
+        $this->getService(TranslationSynchronizer::class)->synchronize($extKey);
         $output->writeln('Done');
+        
+        return 0;
     }
 }

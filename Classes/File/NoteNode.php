@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright 2020 LABOR.digital
+/*
+ * Copyright 2021 LABOR.digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Last modified: 2020.07.22 at 22:44
+ * Last modified: 2021.08.23 at 13:53
  */
 
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3tu\ImportExport;
+namespace LaborDigital\T3tu\File;
 
 
-class TranslationSpreadSheetFile
+class NoteNode extends AbstractNode
 {
     /**
-     * The name of the file
+     * Contains the content of the "note"
      *
      * @var string
      */
-    public $filename;
-
-    /**
-     * Contains the rows of the csv file
-     *
-     * @var array
-     */
-    public $rows = [];
+    public $note;
 }

@@ -20,20 +20,58 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\ImportExport;
+namespace LaborDigital\T3tu\ImportExport;
 
 
-use LaborDigital\T3TU\File\TranslationFile;
-use LaborDigital\T3TU\File\TranslationFileGroup;
-use LaborDigital\T3TU\File\TranslationFileUnit;
-use LaborDigital\T3TU\Util\TranslationUtilTrait;
+use LaborDigital\T3ba\Core\Di\PublicServiceInterface;
+use LaborDigital\T3tu\File\Io\ConstraintApplier;
+use LaborDigital\T3tu\File\Io\GroupReader;
+use LaborDigital\T3tu\File\NoteNode;
+use LaborDigital\T3tu\File\TranslationFile;
+use LaborDigital\T3tu\File\TranslationFileGroup;
+use LaborDigital\T3tu\File\TransUnitNode;
+use LaborDigital\T3tu\Util\TranslationUtilTrait;
 use Neunerlei\FileSystem\Fs;
 use Neunerlei\PathUtil\Path;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class TranslationImporter
+class TranslationImporter implements PublicServiceInterface
 {
     use TranslationUtilTrait;
-
+    
+    /**
+     * @var \LaborDigital\T3tu\ImportExport\TranslationSpreadSheetReader
+     */
+    protected $reader;
+    
+    /**
+     * @var \LaborDigital\T3tu\ImportExport\TranslationSpreadSheetWriter
+     */
+    protected $writer;
+    
+    /**
+     * @var \LaborDigital\T3tu\File\Io\GroupReader
+     */
+    protected $groupReader;
+    
+    /**
+     * @var \LaborDigital\T3tu\File\Io\ConstraintApplier
+     */
+    protected $constraintApplier;
+    
+    public function __construct(
+        TranslationSpreadSheetReader $reader,
+        TranslationSpreadSheetWriter $writer,
+        GroupReader $groupReader,
+        ConstraintApplier $constraintApplier
+    )
+    {
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->groupReader = $groupReader;
+        $this->constraintApplier = $constraintApplier;
+    }
+    
     /**
      * Imports all .csv files that are located in the language directory of the given extension into the .xlf files
      *
@@ -43,18 +81,18 @@ class TranslationImporter
     {
         // Load the files
         $files = $this->findImportFiles($extKey);
-
+        
         // Skip if the files are empty
         if (empty($files)) {
             return;
         }
-
+        
         // Import the files in order
         foreach ($files as $file) {
             $this->importSingleCsvFile($extKey, $file);
         }
     }
-
+    
     /**
      * Returns a list of csv files in the language directory of the given extension
      *
@@ -65,16 +103,15 @@ class TranslationImporter
     protected function findImportFiles(string $extKey): array
     {
         $directory = $this->getSetDirectory($extKey);
-        $iterator  = Fs::getDirectoryIterator($directory, false, ['regex' => '~\\.(xls|xlsx|ods|csv)$~']);
-        $files     = [];
-        $reader    = $this->Container()->getWithoutDi(TranslationSpreadSheetReader::class);
+        $iterator = Fs::getDirectoryIterator($directory, false, ['regex' => '~\\.(xls|xlsx|ods|csv)$~']);
+        $files = [];
         foreach ($iterator as $file) {
-            $files[] = $reader->readFile($file->getPathname());
+            $files[] = $this->reader->readFile($file->getPathname());
         }
-
+        
         return $files;
     }
-
+    
     /**
      * Handles the import of the file-group combined in a single .csv file
      *
@@ -84,21 +121,25 @@ class TranslationImporter
     protected function importSingleCsvFile(string $extKey, TranslationSpreadSheetFile $csvFile): void
     {
         // Check if we have this file in our set
-        $basename  = basename($csvFile->filename, '.csv');
+        $basename = basename($csvFile->filename, '.csv');
         $languages = reset($csvFile->rows);
         array_shift($languages);
         $group = $this->initializeGroup($languages, $extKey, $csvFile, $basename);
-
+        
         // Ignore the source language
         $sourceLanguageKey = reset($languages);
-
+        
         $offset = 0;
         foreach ($languages as $language) {
+            if (! $this->constraintApplier->isFileAllowed($extKey, $basename, $language)) {
+                continue;
+            }
+            
             $file = $sourceLanguageKey === $language ? $group->getSourceFile() : $group->getTargetFiles()[$language];
             $this->importSingleLanguage(++$offset, $file, $csvFile->rows, $sourceLanguageKey);
         }
     }
-
+    
     /**
      * Imports a single language column into its matching translation file
      *
@@ -115,19 +156,19 @@ class TranslationImporter
             if (empty($id)) {
                 continue;
             }
-
+            
             // Check if we have to handle a note
-            $isNote      = false;
+            $isNote = false;
             $sourceValue = null;
             if (stripos($id, '@NOTE@') === 0) {
                 $isNote = true;
-                $id     = substr($id, 6);
-                $value  = $row[1];
+                $id = substr($id, 6);
+                $value = $row[1];
             } else {
                 $sourceValue = $row[1];
-                $value       = $row[$offset];
+                $value = $row[$offset];
             }
-
+            
             // Inherit from source if the value is empty
             if (empty($value)) {
                 if (! empty($sourceValue)) {
@@ -136,36 +177,33 @@ class TranslationImporter
                     continue;
                 }
             }
-
-            if (isset($file->units[$id])) {
-                // Update the unit
-                if ($isSourceFile) {
-                    $file->units[$id]->source = $sourceValue;
-                } else {
-                    $file->units[$id]->source = $sourceValue;
-                    $file->units[$id]->target = $value;
+            
+            if (isset($file->nodes[$id])) {
+                $file->nodes[$id]->source = $sourceValue;
+                if (! $isSourceFile) {
+                    $file->nodes[$id]->target = $value;
                 }
             } else {
-                // Create the unit
-                $unit         = $this->Container()->getWithoutDi(TranslationFileUnit::class);
-                $unit->id     = $id;
-                $unit->isNote = $isNote;
                 if ($isNote) {
-                    $unit->note = $value;
-                } elseif ($isSourceFile) {
-                    $unit->source = $sourceValue;
+                    $node = GeneralUtility::makeInstance(NoteNode::class);
+                    $node->note = $value;
                 } else {
-                    $unit->source = $sourceValue;
-                    $unit->target = $value;
+                    $node = GeneralUtility::makeInstance(TransUnitNode::class);
+                    $node->source = $sourceValue;
+                    if (! $isSourceFile) {
+                        $node->target = $value;
+                    }
                 }
-                $file->units[$id] = $unit;
+                
+                $node->id = $id;
+                $file->nodes[$id] = $node;
             }
         }
-
+        
         // Persist the file
         $file->write();
     }
-
+    
     /**
      * Used to create the instance of a translation file group
      *
@@ -174,20 +212,21 @@ class TranslationImporter
      * @param   TranslationSpreadSheetFile  $csvFile    The reference of the csv file object we create this group fore
      * @param   string                      $basename   The csv file basename to inherit the filename for
      *
-     * @return \LaborDigital\T3TU\File\TranslationFileGroup
+     * @return \LaborDigital\T3tu\File\TranslationFileGroup
      */
     protected function initializeGroup(array $languages, string $extKey, TranslationSpreadSheetFile $csvFile, string $basename): TranslationFileGroup
     {
-        // Compute the source file
         $sourceLanguageKey = array_shift($languages);
-        $sourceFile        = Path::join(dirname($csvFile->filename), $basename . '.xlf');
-
-        // Compute the translation files
-        $targetFiles = [];
+        $sourceFile = Path::join(dirname($csvFile->filename), $basename . '.xlf');
+        
+        $group = $this->groupReader->readSingleGroup($extKey, $sourceFile, $sourceLanguageKey);
+        
         foreach ($languages as $language) {
-            $targetFiles[$language] = Path::join(dirname($csvFile->filename), $language . '.' . $basename . '.xlf');
+            if ($this->constraintApplier->isFileAllowed($extKey, $sourceFile, $language)) {
+                $group->addTargetFile($language);
+            }
         }
-
-        return $this->Container()->getWithoutDi(TranslationFileGroup::class, [$extKey, $sourceFile, $targetFiles, $sourceLanguageKey]);
+        
+        return $group;
     }
 }

@@ -20,7 +20,7 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\ImportExport;
+namespace LaborDigital\T3tu\ImportExport;
 
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -33,17 +33,17 @@ class TranslationSpreadSheetWriter
     /**
      * Writes the given translation file to the disc.
      *
-     * @param   \LaborDigital\T3TU\ImportExport\TranslationSpreadSheetFile  $file
+     * @param   \LaborDigital\T3tu\ImportExport\TranslationSpreadSheetFile  $file
      */
     public function write(TranslationSpreadSheetFile $file): void
     {
         $spreadSheet = $this->makeSpreadSheet($file->rows);
-        $writer      = $this->makeConcreteWriter($spreadSheet, $file->filename);
+        $writer = $this->makeConcreteWriter($spreadSheet, $file->filename);
         $writer->save($file->filename);
     }
-
+    
     /**
-     * Converts the given, multi-dimensional row array into a spread sheet instance
+     * Converts the given, multi-dimensional row array into a spreadsheet instance
      *
      * @param   array  $rows
      *
@@ -54,12 +54,12 @@ class TranslationSpreadSheetWriter
         $spreadSheet = GeneralUtility::makeInstance(Spreadsheet::class);
         $spreadSheet->getDefaultStyle()->setQuotePrefix(true);
         $spreadSheet->getActiveSheet()->fromArray($rows);
-
+        
         return $spreadSheet;
     }
-
+    
     /**
-     * Creates the concrete spread sheet writer instance based on the file extension
+     * Creates the concrete spreadsheet writer instance based on the file extension
      *
      * @param   \PhpOffice\PhpSpreadsheet\Spreadsheet  $sheet
      * @param   string                                 $filename

@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright 2020 LABOR.digital
+/*
+ * Copyright 2021 LABOR.digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,52 +14,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Last modified: 2020.07.22 at 17:30
+ * Last modified: 2021.08.22 at 21:41
  */
 
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\ImportExport;
+namespace LaborDigital\T3tu\Command;
 
 
-use InvalidArgumentException;
-use LaborDigital\Typo3BetterApi\Container\TypoContainer;
+use LaborDigital\T3ba\Core\Di\ContainerAwareTrait;
+use LaborDigital\T3ba\ExtConfigHandler\Command\ConfigureCliCommandInterface;
+use LaborDigital\T3tu\File\Io\ConstraintApplier;
+use LaborDigital\T3tu\ImportExport\TranslationImporter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class TranslationExportCommand extends Command
+class TranslationImportCommand extends Command implements ConfigureCliCommandInterface
 {
+    use ContainerAwareTrait;
+    
     /**
      * @inheritDoc
      */
     protected function configure()
     {
-        $this->setName('translation:export');
-        $this->setDescription('Exports the translation labels of an extension into a csv file');
+        $this->setName('t3tu:import');
+        $this->setDescription('Imports the csv files of a translation into xlf translation files');
         $this->addArgument('extension', InputArgument::REQUIRED,
             'The extension key to export the translations for');
-        $this->addOption('format', 'f', InputOption::VALUE_OPTIONAL,
-            'allows you to set the output format (default: csv), Options are: "csv", "xls", "xlsx" and "ods"', 'csv');
     }
-
+    
     /**
      * @inheritDoc
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->getService(ConstraintApplier::class)->setAction(ConstraintApplier::ACTION_IMPORT);
+        
         $extKey = $input->getArgument('extension');
-        $format = strtolower(ltrim($input->getOption('format'), '.'));
-
-        if (! in_array($format, ['csv', 'xls', 'xlsx', 'ods'])) {
-            throw new InvalidArgumentException('The given format: ' . $format . ' is invalid!');
-        }
-
-        $output->writeln('Exporting translations for extension: ' . $extKey);
-        TypoContainer::getInstance()->get(TranslationExporter::class)->export($extKey, $format);
+        $output->writeln('Importing translations for extension: ' . $extKey);
+        $this->getService(TranslationImporter::class)->import($extKey);
         $output->writeln('Done');
+        
+        return 0;
     }
 }

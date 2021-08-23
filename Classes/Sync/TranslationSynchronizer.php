@@ -20,18 +20,53 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU\Sync;
+namespace LaborDigital\T3tu\Sync;
 
 
-use LaborDigital\T3TU\File\TranslationFileGroup;
-use LaborDigital\T3TU\Util\TranslationUtilTrait;
+use LaborDigital\T3ba\Core\Di\PublicServiceInterface;
+use LaborDigital\T3tu\File\Io\ConstraintApplier;
+use LaborDigital\T3tu\File\Io\Reader;
+use LaborDigital\T3tu\File\Io\Writer;
+use LaborDigital\T3tu\File\TranslationFileGroup;
 
-class TranslationSynchronizer
+class TranslationSynchronizer implements PublicServiceInterface
 {
-    use TranslationUtilTrait;
+    /**
+     * @var \LaborDigital\T3tu\File\Io\Reader
+     */
+    protected $reader;
+    
+    /**
+     * @var \LaborDigital\T3tu\File\Io\Writer
+     */
+    protected $writer;
+    
+    /**
+     * @var \LaborDigital\T3tu\File\Io\ConstraintApplier
+     */
+    protected $constraintApplier;
+    
+    /**
+     * @var \LaborDigital\T3tu\Sync\SyncMapper
+     */
+    protected $mapper;
+    
+    public function __construct(
+        Reader $reader,
+        Writer $writer,
+        ConstraintApplier $constraintApplier,
+        SyncMapper $mapper
+    )
+    {
+        $this->reader = $reader;
+        $this->constraintApplier = $constraintApplier;
+        $this->writer = $writer;
+        $this->mapper = $mapper;
+    }
     
     /**
      * Synchronizes all translation files that are found in the translation directory of the extension with $extKey.
+     *
      * Synchronize will: Create missing translation files based on the list of all possible translation languages for all found source files.
      * It will also use the source file (the one without the language key) as a single source of origin an update all target files (the ones with the language
      * key) to contain all trans-units that exist in the source file. It removes old translation units that were removed in the source file.
@@ -43,7 +78,7 @@ class TranslationSynchronizer
      */
     public function synchronize(string $extKey, string $sourceFallbackLanguage = 'en'): void
     {
-        $set = $this->getSet($extKey, $sourceFallbackLanguage);
+        $set = $this->reader->read($extKey, $sourceFallbackLanguage);
         foreach ($set->getGroups() as $group) {
             $this->synchronizeSingleGroup($group, $set->getLanguages());
         }
@@ -57,23 +92,19 @@ class TranslationSynchronizer
      */
     protected function synchronizeSingleGroup(TranslationFileGroup $group, array $languages): void
     {
-        // Make sure we have target files for all languages
-        $sourceLanguage  = $group->getSourceFile()->sourceLang;
+        $sourceLanguage = $group->getSourceFile()->sourceLang;
         $targetLanguages = array_diff($languages, [$sourceLanguage]);
+        
         foreach ($targetLanguages as $language) {
-            if (! isset($group->getTargetFiles()[$language])) {
+            if (! isset($group->getTargetFiles()[$language])
+                && $this->constraintApplier->isFileAllowed(
+                    $group->getProductName(), $group->getSourceFile()->filename, $language)) {
                 $group->addTargetFile($language);
             }
         }
         
-        // Create the map to synchronize the group
-        $map = $this->Container()->getWithoutDi(TranslationSyncMapping::class, [$group]);
-        $map->synchronize();
+        $this->mapper->apply($group);
         
-        // Persist the files
-        $group->getSourceFile()->write();
-        foreach ($group->getTargetFiles() as $targetFile) {
-            $targetFile->write();
-        }
+        $this->writer->writeGroup($group);
     }
 }

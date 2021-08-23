@@ -20,7 +20,7 @@
 declare(strict_types=1);
 
 
-namespace LaborDigital\T3TU;
+namespace LaborDigital\T3tu;
 
 
 use Exception;

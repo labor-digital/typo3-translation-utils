@@ -36,42 +36,16 @@ declare(strict_types=1);
  * Last modified: 2020.06.18 at 13:37
  */
 
-namespace LaborDigital\T3TU\File;
+namespace LaborDigital\T3tu\File;
 
-class TranslationFileUnit
+use LaborDigital\T3ba\Core\Di\NoDiInterface;
+
+abstract class AbstractNode implements NoDiInterface
 {
     /**
-     * The id / key for this translation pair
+     * The id / key for this node
      *
      * @var string
      */
     public $id;
-    
-    /**
-     * The source language value for this id
-     *
-     * @var string
-     */
-    public $source;
-    
-    /**
-     * The target value for this language, or null if this is the base/origin file or if $isNote is true
-     *
-     * @var string|null
-     */
-    public $target;
-    
-    /**
-     * Contains the content of "note" nodes if $isNote is true, otherwise null
-     *
-     * @var string|null
-     */
-    public $note;
-    
-    /**
-     * True if this unit is a note block
-     *
-     * @var bool
-     */
-    public $isNote = false;
 }
