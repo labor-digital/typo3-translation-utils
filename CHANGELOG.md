@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [10.0.2](https://github.com/labor-digital/typo3-translation-utils/compare/v10.0.1...v10.0.2) (2021-08-25)
+
+
+### Bug Fixes
+
+* **SyncMapper:** use class to determine node type ([f1b3d28](https://github.com/labor-digital/typo3-translation-utils/commit/f1b3d28c5dac3a5a8dac63a577ebc12935c9243f))
+* remove .editorconfig ([20d336d](https://github.com/labor-digital/typo3-translation-utils/commit/20d336d2b6882e2227e862e184b0728b1f311a28))
+
 ### [10.0.1](https://github.com/labor-digital/typo3-translation-utils/compare/v10.0.0...v10.0.1) (2021-08-23)
 
 ## [10.0.0](https://github.com/labor-digital/typo3-translation-utils/compare/v9.2.1...v10.0.0) (2021-08-23)
