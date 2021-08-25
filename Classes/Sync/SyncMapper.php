@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace LaborDigital\T3tu\Sync;
 
 
+use LaborDigital\T3tu\File\NoteNode;
 use LaborDigital\T3tu\File\TranslationFileGroup;
 
 class SyncMapper
@@ -105,7 +106,7 @@ class SyncMapper
     {
         $sourceFile = $this->group->getSourceFile();
         foreach ($sourceFile->nodes as $unit) {
-            $sourceId = md5(trim($unit->isNote ? $unit->note : $unit->source));
+            $sourceId = md5(trim($unit instanceof NoteNode ? $unit->note : $unit->source));
             $this->map[$unit->id] = [$sourceFile->filename => $unit];
             $this->sourceMap[$sourceId][] = $unit->id;
         }
