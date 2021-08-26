@@ -26,6 +26,7 @@ namespace LaborDigital\T3tu\ImportExport;
 use LaborDigital\T3ba\Core\Di\PublicServiceInterface;
 use LaborDigital\T3tu\File\Io\ConstraintApplier;
 use LaborDigital\T3tu\File\Io\GroupReader;
+use LaborDigital\T3tu\File\Io\Writer;
 use LaborDigital\T3tu\File\NoteNode;
 use LaborDigital\T3tu\File\TranslationFile;
 use LaborDigital\T3tu\File\TranslationFileGroup;
@@ -55,6 +56,11 @@ class TranslationImporter implements PublicServiceInterface
     protected $groupReader;
     
     /**
+     * @var \LaborDigital\T3tu\File\Io\Writer
+     */
+    protected $fileWriter;
+    
+    /**
      * @var \LaborDigital\T3tu\File\Io\ConstraintApplier
      */
     protected $constraintApplier;
@@ -63,12 +69,14 @@ class TranslationImporter implements PublicServiceInterface
         TranslationSpreadSheetReader $reader,
         TranslationSpreadSheetWriter $writer,
         GroupReader $groupReader,
+        Writer $fileWriter,
         ConstraintApplier $constraintApplier
     )
     {
         $this->reader = $reader;
         $this->writer = $writer;
         $this->groupReader = $groupReader;
+        $this->fileWriter = $fileWriter;
         $this->constraintApplier = $constraintApplier;
     }
     
@@ -200,8 +208,7 @@ class TranslationImporter implements PublicServiceInterface
             }
         }
         
-        // Persist the file
-        $file->write();
+        $this->fileWriter->writeFile($file);
     }
     
     /**
