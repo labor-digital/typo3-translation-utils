@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [10.0.3](https://github.com/labor-digital/typo3-translation-utils/compare/v10.0.2...v10.0.3) (2021-08-26)
+
+
+### Bug Fixes
+
+* resolve multiple issues with the new node format ([9986432](https://github.com/labor-digital/typo3-translation-utils/commit/9986432507114fa475bdefd18ded9c55e4b724cd))
+
 ### [10.0.2](https://github.com/labor-digital/typo3-translation-utils/compare/v10.0.1...v10.0.2) (2021-08-25)
 
 
