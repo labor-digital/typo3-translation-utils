@@ -114,10 +114,10 @@ class TranslationFile implements NoDiInterface
     {
         // Prepare map to sort namespaced and global elements correctly
         $isBaseFile = $this->targetLang === null || $this->sourceLang === $this->targetLang;
-        $messages = $this->nodes;
+        $nodes = $this->nodes;
         $mapIdMapping = [];
         $temporaryMap = [];
-        foreach ($messages as $k => $v) {
+        foreach ($nodes as $k => $v) {
             if (strpos($k, '.') === false) {
                 $_k = '_globalKeys.' . $k;
                 $mapIdMapping[$_k] = $k;
@@ -137,29 +137,29 @@ class TranslationFile implements NoDiInterface
             }
             $sortedMap[$k] = $v;
         }
-        $messages = $sortedMap;
+        $nodes = $sortedMap;
         unset($temporaryMap, $mapIdMapping, $sortedMap);
         
         // Build a list of children
         $children = [
             'tag' => 'body',
         ];
-        foreach ($messages as $message) {
-            if ($message->isNote) {
+        foreach ($nodes as $node) {
+            if ($node instanceof NoteNode) {
                 $children[] = [
                     'tag' => 'note',
-                    '@id' => $message->id,
-                    'content' => $this->wrapCDataLabel(PHP_EOL . $message->note . PHP_EOL),
+                    '@id' => $node->id,
+                    'content' => $this->wrapCDataLabel(PHP_EOL . $node->note . PHP_EOL),
                 ];
-            } else {
+            } elseif ($node instanceof TransUnitNode) {
                 $children[]
                     = Arrays::attach(
                     [
                         'tag' => 'trans-unit',
-                        '@id' => $message->id,
+                        '@id' => $node->id,
                         [
                             'tag' => 'source',
-                            'content' => $this->wrapCDataLabel($message->source),
+                            'content' => $this->wrapCDataLabel($node->source),
                         ],
                     ],
                     $isBaseFile
@@ -167,7 +167,7 @@ class TranslationFile implements NoDiInterface
                         : [
                         1 => [
                             'tag' => 'target',
-                            'content' => $this->wrapCDataLabel($message->target),
+                            'content' => $this->wrapCDataLabel($node->target),
                         ],
                     ]
                 );

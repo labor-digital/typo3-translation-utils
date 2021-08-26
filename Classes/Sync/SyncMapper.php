@@ -23,6 +23,7 @@ namespace LaborDigital\T3tu\Sync;
 
 use LaborDigital\T3tu\File\NoteNode;
 use LaborDigital\T3tu\File\TranslationFileGroup;
+use LaborDigital\T3tu\File\TransUnitNode;
 
 class SyncMapper
 {
@@ -74,25 +75,25 @@ class SyncMapper
             $targetFile->nodes = [];
             
             // Rebuild the messages list based on the mapping
-            foreach ($this->map as $id => $units) {
+            foreach ($this->map as $id => $nodes) {
                 // Check if we know this message in the target lang
-                if (! isset($units[$fileId])) {
+                if (! isset($nodes[$fileId])) {
                     // Clone the message from the source message
-                    $unit = clone $units[$this->group->getSourceFile()->filename];
-                    if (! $unit->isNote) {
-                        $unit->target = 'COPY FROM: ' . $sourceFile->sourceLang . ' - ' . $unit->source;
+                    $node = clone $nodes[$this->group->getSourceFile()->filename];
+                    if ($node instanceof TransUnitNode) {
+                        $node->target = 'COPY FROM: ' . $sourceFile->sourceLang . ' - ' . $node->source;
                     }
                 } else {
                     // Update the id and the source
-                    $unit = $units[$fileId];
-                    $unit->id = $id;
-                    if ($unit->isNote) {
-                        $unit->note = $units[$sourceFileId]->note;
-                    } else {
-                        $unit->source = $units[$sourceFileId]->source;
+                    $node = $nodes[$fileId];
+                    $node->id = $id;
+                    if ($node instanceof NoteNode) {
+                        $node->note = $nodes[$sourceFileId]->note;
+                    } elseif ($node instanceof TransUnitNode) {
+                        $node->source = $nodes[$sourceFileId]->source;
                     }
                 }
-                $targetFile->nodes[$id] = $unit;
+                $targetFile->nodes[$id] = $node;
             }
         }
         
@@ -105,10 +106,10 @@ class SyncMapper
     protected function initializeSourceFile(): void
     {
         $sourceFile = $this->group->getSourceFile();
-        foreach ($sourceFile->nodes as $unit) {
-            $sourceId = md5(trim($unit instanceof NoteNode ? $unit->note : $unit->source));
-            $this->map[$unit->id] = [$sourceFile->filename => $unit];
-            $this->sourceMap[$sourceId][] = $unit->id;
+        foreach ($sourceFile->nodes as $node) {
+            $sourceId = md5(trim($node instanceof NoteNode ? $node->note : $node->source));
+            $this->map[$node->id] = [$sourceFile->filename => $node];
+            $this->sourceMap[$sourceId][] = $node->id;
         }
     }
     
@@ -119,15 +120,15 @@ class SyncMapper
     {
         foreach ($this->group->getTargetFiles() as $targetFile) {
             // Read the content into the map
-            foreach ($targetFile->nodes as $unit) {
-                $sourceId = md5(trim($unit->isNote ? $unit->note : $unit->source));
+            foreach ($targetFile->nodes as $node) {
+                $sourceId = md5(trim($node instanceof NoteNode ? $node->note : $node->source));
                 
                 // Try to map the id over the source string (Fallback if source id was changed)
-                if (! isset($this->map[$unit->id])) {
+                if (! isset($this->map[$node->id])) {
                     if (isset($this->sourceMap[$sourceId])) {
                         // Go the fast route if there is only a single match
                         if (count($this->sourceMap[$sourceId]) === 1) {
-                            $unit->id = $this->sourceMap[$sourceId][0];
+                            $node->id = $this->sourceMap[$sourceId][0];
                         } else {
                             // Try to figure out the correct match
                             $matches = array_filter($this->sourceMap[$sourceId], static function ($v) use ($targetFile) {
@@ -140,13 +141,13 @@ class SyncMapper
                             }
                             
                             // Update id
-                            $unit->id = reset($matches);
+                            $node->id = reset($matches);
                         }
                     } else {
                         continue;
                     }
                 }
-                $this->map[$unit->id][$targetFile->filename] = $unit;
+                $this->map[$node->id][$targetFile->filename] = $node;
             }
         }
     }

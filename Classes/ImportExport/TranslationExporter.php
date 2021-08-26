@@ -78,7 +78,7 @@ class TranslationExporter implements PublicServiceInterface
         
         // Collect all rows on the source file
         foreach ($group->getSourceFile()->nodes as $node) {
-            if ($node->isNote) {
+            if ($node instanceof NoteNode) {
                 $rows[$node->id] = ['@NOTE@' . $node->id, $node->note];
                 continue;
             }

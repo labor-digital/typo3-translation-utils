@@ -33,7 +33,7 @@ class TransUnitNode extends AbstractNode
     public $source;
     
     /**
-     * The target value for this language, or null if this is the base/origin file or if $isNote is true
+     * The target value for this language, or null if this is the base/origin file
      *
      * @var string|null
      */
