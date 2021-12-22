@@ -266,7 +266,7 @@ class Writer
                         return null;
                     }
                     
-                    return $space . '    ' . $v;
+                    return $space . str_repeat(' ', 4) . $v;
                 }, $lines));
                 
                 return PHP_EOL . $openTag . PHP_EOL . implode(PHP_EOL, $lines) . PHP_EOL . $space . $closeTag;
