@@ -29,7 +29,7 @@
             "LaborDigital\\T3TU\\": "Classes"
         }
     },
-    "version": "9.2.1",
+    "version": "9.2.2",
     "extra": {
         "T3BA": {
             "isDev": true
