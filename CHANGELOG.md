@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [10.0.5](https://github.com/labor-digital/typo3-translation-utils/compare/v10.0.4...v10.0.5) (2022-04-29)
+
+
+### Bug Fixes
+
+* only update file if the content was changed ([6ed3abd](https://github.com/labor-digital/typo3-translation-utils/commit/6ed3abd8bac33e90356334b74cc04efaf4cbbfc1))
+
 ### [10.0.4](https://github.com/labor-digital/typo3-translation-utils/compare/v10.0.3...v10.0.4) (2021-12-22)
 
 
