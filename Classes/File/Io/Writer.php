@@ -52,6 +52,10 @@ class Writer
     
     public function writeFile(TranslationFile $file): void
     {
+        if ($file->initialHash === $file->getHash()) {
+            return;
+        }
+        
         $isBaseFile = $file->targetLang === null || $file->sourceLang === $file->targetLang;
         $children = $this->convertNodesToChildren(
             $isBaseFile,

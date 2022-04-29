@@ -86,6 +86,13 @@ class TranslationFile implements NoDiInterface
     public $params = [];
     
     /**
+     * The hash of the file when it was changed
+     *
+     * @var string
+     */
+    public $initialHash;
+    
+    /**
      * TranslationFile constructor.
      *
      * @param   string       $filename        The absolute path to the file to load
@@ -103,5 +110,16 @@ class TranslationFile implements NoDiInterface
         $this->sourceLang = $sourceLanguage;
         $this->nodes = $units;
         $this->params = $params;
+        $this->initialHash = '';
+    }
+    
+    /**
+     * Returns the hash value of the content of this file
+     *
+     * @return string
+     */
+    public function getHash(): string
+    {
+        return md5(serialize([$this->filename, $this->productName, $this->targetLang, $this->sourceLang, $this->nodes, $this->params]));
     }
 }

@@ -69,6 +69,7 @@ class FileReader
         $content = $this->readContents($filename);
         $this->readMetaFromContent($content, $file);
         $this->readNodes($content, $file);
+        $file->initialHash = $file->getHash();
         
         return $file;
     }
